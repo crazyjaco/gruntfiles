@@ -27,25 +27,25 @@ var fs = require('fs'),
 //
 //  ...
 
-task.registerBasicTask('less', 'compiles less files', function(data, name) {
-  var out = path.resolve(name),
-    min = /\.min\.css$/.test(name),
+task.registerMultiTask('less', 'compiles less files', function(target) {
+  var dest = this.file.dest,
+    min = /\.min\.css$/.test(dest),
     cb = this.async();
 
-  verbose.or.write('Writing to .' + out.replace(process.cwd(), '') + '...');
+  verbose.or.write('Writing to ' + dest + '...');
 
-  var files = file.expand(data);
+  var files = file.expand(this.file.src);
 
   // check that the files passed in are actual less files, yell if it's not
   files.forEach(function(f) {
     if(path.extname(f) !== '.less') fail.warn(f + ' not a .less file', 3);
   });
 
-  async.map(files, task.helper('less', { compress: min }), function(err, results) {
+  utils.async.map(files, task.helper('less', { compress: min }), function(err, results) {
     if(err) return fail.warn(err);
 
     // now gonna concat the expanded set of files into destination files.
-    file.write(out, results.join('\n\n'));
+    file.write(dest, results.join('\n\n'));
     verbose.or.ok();
     cb();
   });
